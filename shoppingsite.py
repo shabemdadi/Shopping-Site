@@ -7,7 +7,7 @@ Authors: Joel Burton, Christian Fernandez, Meggie Mahnken.
 """
 
 
-from flask import Flask, render_template, redirect, flash, session
+from flask import Flask, render_template, redirect, flash, session, request
 import jinja2
 
 import model
@@ -63,24 +63,26 @@ def shopping_cart():
     # TODO: Display the contents of the shopping cart.
     #   - The cart is a list in session containing melons added
     
-    print "tHIS IS RUNNING"
-    cart_list = session.setdefault('cart',[])
-    print cart_list
-    cart = {}
-    order_total = 0
-    if cart_list:
-        import pdb; pdb.set_trace()
-        print "this is running too"
-        for item in cart_list:
-            print "this is running"
-            melon = cart.setdefault(item, {})
-            melon_info = model.Melon.get_by_id(item)
-            melon["name"] = melon_info.common_name
-            melon["price"] = melon_info.price
-            melon["quantity"] = melon.setdefault("quantity",0) + 1
-            melon["total"] = melon["price"] + melon["quantity"]
-            order_total = order_total + melon["total"]
+    cart_list = session.get('cart',[])          # getting the value for the key 'cart' in our session dictionary, if a key has not been created (no cookies yet)we will get back an empty list
+    cart = {}                                   # initializing an empty dictionary for our cart items
+    order_total = 0                             # setting the order_total equal to 0
+    for item in cart_list:                      # iterating over each item(id) in our cart list
+        melons = cart.setdefault(item, {})      # setting variable melons equal to the value of the key 'item' in our 'cart' dictionary, if key is not there, set it to an empty dictionary
+        if melons:                              # if 'melons' is not empty (i.e. we have already added this melon in)
+            # import pdb; pdb.set_trace()
+            melons["quantity"] += 1             # add one to the value for the quantity
+    
+        else:                                   # melons is not empty (i.e. we have already added a key for this item)
+            melon_info = model.Melon.get_by_id(item)    # get some info from the query executed from model
+            melons["name"] = melon_info.common_name     #set key "name" equal to common_name from the query
+            melons["price"] = melon_info.price          # set key "price" equal to price from the query
+            melons["quantity"] = 1                      # set key "quantity" equal to one
         
+        melons["total"] = melons["price"] * melons["quantity"]  #set key "total" equal to the price * quantity
+        order_total = order_total + melons["total"]             # update order_total
+        
+    cart = cart.values()                                        # set cart equal to the values of the cart dictionary (i.e. )
+            
     return render_template("cart.html", cart=cart, order_total=order_total)
 
 
@@ -95,13 +97,13 @@ def add_to_cart(id):
     # TODO: Finish shopping cart functionality
     #   - use session variables to hold cart list
     
-    cart = session.setdefault('cart',[])
+    cart = session.setdefault('cart',[])              #setting the variable cart equal to the value of the dictionary key 'cart' within our session, which is an empty list if it is not already in the dictionary
     
-    session['cart'].append(id)
+    session['cart'].append(id)                        #appending the melon id to the cart key in our session dictionary
         
-    flash("Melon was succesully added to your cart!")
+    flash("Melon was succesully added to your cart!") # Flashing this message when we add a melon
     
-    return redirect("/cart")
+    return redirect("/cart")                          #redirect to the cart page
 
 @app.route("/login", methods=["GET"])
 def show_login():
