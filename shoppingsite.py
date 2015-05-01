@@ -121,8 +121,21 @@ def process_login():
     """
 
     # TODO: Need to implement this!
-
-    return "Oops! This needs to be implemented"
+    email = request.form.get("email")
+    password = request.form.get("password")
+    
+    try:
+        customer = model.Customer.get_by_email(email)
+        if customer.password == password:
+            flash("Login successful!")
+            return redirect("/melons")
+        else:
+            flash("Incorrect password")
+            return redirect("/login")
+      
+    except:
+            flash("no such email")
+            return redirect("/login")
 
 
 @app.route("/checkout")
